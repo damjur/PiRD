@@ -33,9 +33,9 @@ def read_wav_and_do_mfcc(filename):
         rate = waveFile.getframerate()
         duration = frames / float(rate)
         
-        return mfcc(np.array(result,dtype=np.float32), rate, winlen=0.025, winstep=0.01, numcep=13, nfilt=26, nfft=512)
+        return mfcc(np.array(result,dtype=np.float32), rate, winlen=0.0125, winstep=0.005, numcep=7, nfilt=7, nfft=512*2)
     
-def getFeatures(dirname="train"):
+def getFeatures(filename, dirname):
 #     print("getFeatures ", dirname)
 #     cache_file = "features.npy"
 #     if os.path.isfile(cache_file):
@@ -43,6 +43,8 @@ def getFeatures(dirname="train"):
     dirname = os.path.join(".",dirname)
     result = [[] for _ in range(10)]
     for fname in os.listdir(dirname):
+        if fname == filename:
+            continue
 #         print(fname)
         if fname.endswith('.WAV'):
             i = int(fname.split("_")[-2])
@@ -178,26 +180,27 @@ def draw_heatmap(data):
 # In[5]:
 
 
-dirname = "test"
-features = getFeatures("train")
-# print(features)
+dirname = "cyfry"
 dirname = os.path.join(".",dirname)
 filenames= os.listdir(dirname)
-aggregators = [get_kNN_aggregator(1),get_kNN_aggregator(3),get_kNN_aggregator(5),get_aggregator(np.min),get_aggregator(np.mean)]
-for a in aggregators:
-    results = np.zeros((10,10))
-    for fname in filenames:
-        if fname.endswith('.WAV'):
+for test_filename in filenames:
+    print(test_filename)
+    features = getFeatures(test_filename, "cyfry")
+    # print(features)
+    aggregators = [get_kNN_aggregator(1),get_kNN_aggregator(3),get_kNN_aggregator(5)]#,get_aggregator(np.min),get_aggregator(np.mean)]
+    for a in aggregators:
+        results = np.zeros((10,10))
+        if test_filename.endswith('.WAV'):
 #             print("check ", fname)
-            i = int(fname.split("_")[-2])
-            fname = os.path.join(dirname, fname) 
+            i = int(test_filename.split("_")[-2])
+            fname = os.path.join(dirname, test_filename)
             fv = read_wav_and_do_mfcc(fname)
             dec= classify(fv,a)
             results[i,dec]+=1
-#    print(results)
-    recall = np.diag(results) / np.sum(results, axis = 1)
-    precision = np.diag(results) / np.sum(results, axis = 0)
-    print(np.nanmean(precision), np.nanmean(recall))
+        # print(results)
+        recall = np.diag(results) / np.sum(results, axis = 1)
+        precision = np.diag(results) / np.sum(results, axis = 0)
+        print(np.nanmean(precision), np.nanmean(recall))
 
-    # draw_heatmap(results)
+        # draw_heatmap(results)
 
